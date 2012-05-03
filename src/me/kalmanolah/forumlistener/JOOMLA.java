@@ -1,17 +1,18 @@
 package me.kalmanolah.forumlistener;
 
+import com.greatmancode.extras.Tools;
+import com.greatmancode.okb3.OKBSync;
+import com.greatmancode.okb3.OKBWebsiteDB;
+import com.greatmancode.okb3.OKConfig;
+import com.greatmancode.okb3.OKLogger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
-import me.kalmanolah.extras.Tools;
-import me.kalmanolah.okb3.OKBSync;
-import me.kalmanolah.okb3.OKConfig;
-import me.kalmanolah.okb3.OKDatabase;
-import me.kalmanolah.okb3.OKLogger;
+
 
 public class JOOMLA implements OKBSync {
 
@@ -25,8 +26,8 @@ public boolean accountExist(String username, String password) {
     boolean exist = false;
     try {
     ResultSet rs =
-    OKDatabase.dbm.prepare(
-    "SELECT password FROM " + OKConfig.config.get("db.prefix")
+    OKBWebsiteDB.dbm.prepare(
+    "SELECT password FROM " + OKConfig.tablePrefix
     + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next()) {
     do {
@@ -48,7 +49,7 @@ public boolean accountExist(String username, String password) {
 @Override
 public void changeRank(String username, int forumGroupId) {
     try {
-                 Object map = OKConfig.config.get("groups");
+                 Object map = OKConfig.groupList;
                  HashMap<Integer, String> groupmap = null;
                  if(map instanceof HashMap){
                      groupmap = (HashMap)map;
@@ -56,7 +57,7 @@ public void changeRank(String username, int forumGroupId) {
                 
                 String rank = groupmap.get(forumGroupId);
                 if(groupmap != null){
-                    OKDatabase.dbm.prepare("UPDATE " + OKConfig.config.get("db.prefix") + "users SET usertype=" + rank + " WHERE username = '" + username + "'").executeUpdate();
+                    OKBWebsiteDB.dbm.prepare("UPDATE " + OKConfig.tablePrefix + "users SET usertype=" + rank + " WHERE username = '" + username + "'").executeUpdate();
                 }
                 else{
                     OKLogger.info("[OKB3] Fail at line: '52-54' Contact Somers and tell him he failed.");
@@ -83,7 +84,7 @@ public List<Integer> getGroup(String username) {
     List<Integer> group = new ArrayList<Integer>();
     try
     {
-    ResultSet rs = OKDatabase.dbm.prepare("SELECT usertype FROM " + OKConfig.config.get("db.prefix") + "users WHERE username = '" + username + "'").executeQuery();
+    ResultSet rs = OKBWebsiteDB.dbm.prepare("SELECT usertype FROM " + OKConfig.tablePrefix + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next())
     {
     do
@@ -93,7 +94,7 @@ public List<Integer> getGroup(String username) {
     while(rs.next());
     }
     rs.close();
-    rs = OKDatabase.dbm.prepare("SELECT membergroupids FROM " + OKConfig.config.get("db.prefix") + "users WHERE username = '" + username + "'").executeQuery();
+    rs = OKBWebsiteDB.dbm.prepare("SELECT membergroupids FROM " + OKConfig.tablePrefix + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next())
     {
     do
