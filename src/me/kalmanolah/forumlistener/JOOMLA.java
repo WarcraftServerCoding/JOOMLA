@@ -1,10 +1,10 @@
 package me.kalmanolah.forumlistener;
 
-import com.greatmancode.extras.Tools;
-import com.greatmancode.okb3.OKBSync;
-import com.greatmancode.okb3.OKBWebsiteDB;
-import com.greatmancode.okb3.OKConfig;
-import com.greatmancode.okb3.OKLogger;
+import me.kalmanolah.extras.Tools;
+import me.kalmanolah.okb3.OKBSync;
+import me.kalmanolah.okb3.OKDatabase;
+import me.kalmanolah.okb3.OKConfig;
+import me.kalmanolah.okb3.OKLogger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,8 +26,8 @@ public boolean accountExist(String username, String password) {
     boolean exist = false;
     try {
     ResultSet rs =
-    OKBWebsiteDB.dbm.prepare(
-    "SELECT password FROM " + OKConfig.tablePrefix
+    OKDatabase.dbm.prepare(
+    "SELECT password FROM " + OKConfig.config.get("db.prefix")
     + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next()) {
     do {
@@ -49,18 +49,23 @@ public boolean accountExist(String username, String password) {
 @Override
 public void changeRank(String username, int forumGroupId) {
     try {
-                 Object map = OKConfig.groupList;
-                 HashMap<Integer, String> groupmap = null;
-                 if(map instanceof HashMap){
-                     groupmap = (HashMap)map;
-                 }
                 
-                String rank = groupmap.get(forumGroupId);
-                if(groupmap != null){
-                    OKBWebsiteDB.dbm.prepare("UPDATE " + OKConfig.tablePrefix + "users SET usertype=" + rank + " WHERE username = '" + username + "'").executeUpdate();
+                HashMap<String, String> rank = new HashMap();
+                if(OKConfig.config.get("ranks.identifiers") instanceof HashMap){
+                    rank = (HashMap)OKConfig.config.get("ranks.identifiers");
                 }
-                else{
-                    OKLogger.info("[OKB3] Fail at line: '52-54' Contact Somers and tell him he failed.");
+                ResultSet rs = OKDatabase.dbm.prepare("SELECT id FROM " + OKConfig.config.get("db.prefix") + "users WHERE username = '" + username + "'").executeQuery();
+                int userid = 0;
+                if (rs.next()) {
+                    do {
+                    userid = rs.getInt("id");
+
+                    } while (rs.next());
+                }
+                rs.close();
+                if(userid != 0){
+                    OKDatabase.dbm.prepare("UPDATE " + OKConfig.config.get("db.prefix") + "users SET usertype=" + rank.get(forumGroupId) + " WHERE username = '" + username + "'").executeUpdate();
+                    OKDatabase.dbm.prepare("UPDATE " + OKConfig.config.get("db.prefix") + "user_usergroup_map SET group_id=" + forumGroupId + " WHERE user_id = '" + userid + "'").executeUpdate();
                 }
     } catch (SQLException e) {
     e.printStackTrace();
@@ -84,7 +89,7 @@ public List<Integer> getGroup(String username) {
     List<Integer> group = new ArrayList<Integer>();
     try
     {
-    ResultSet rs = OKBWebsiteDB.dbm.prepare("SELECT usertype FROM " + OKConfig.tablePrefix + "users WHERE username = '" + username + "'").executeQuery();
+    ResultSet rs = OKDatabase.dbm.prepare("SELECT usertype FROM " + OKConfig.config.get("db.prefix") + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next())
     {
     do
@@ -94,7 +99,7 @@ public List<Integer> getGroup(String username) {
     while(rs.next());
     }
     rs.close();
-    rs = OKBWebsiteDB.dbm.prepare("SELECT membergroupids FROM " + OKConfig.tablePrefix + "users WHERE username = '" + username + "'").executeQuery();
+    rs = OKDatabase.dbm.prepare("SELECT membergroupids FROM " + OKConfig.config.get("db.prefix") + "users WHERE username = '" + username + "'").executeQuery();
     if (rs.next())
     {
     do
